@@ -87,7 +87,15 @@ class WP_Import extends WP_Importer {
 				check_admin_referer( 'import-wordpress' );
 				$this->fetch_attachments = ( ! empty( $_POST['fetch_attachments'] ) && $this->allow_fetch_attachments() );
 				$this->id = (int) $_POST['import_id'];
-				$file = get_attached_file( $this->id );
+				$post = get_post( $this->id );
+				if (strpos($post->guid, "localhost")) {
+					$file = get_attached_file( $this->id );
+				} else {
+					$file = $post->guid;
+					if (substr($file, 0, 2) == "//") {
+						$file = "http:" . $file;
+					}
+				}
 				set_time_limit(0);
 				$this->import( $file );
 				break;
@@ -130,7 +138,7 @@ class WP_Import extends WP_Importer {
 	 * @param string $file Path to the WXR file for importing
 	 */
 	function import_start( $file ) {
-		if ( ! is_file($file) ) {
+		if ( ! file_get_contents( $file ) ) {
 			echo '<p><strong>' . __( 'Sorry, there has been an error.', 'wordpress-importer' ) . '</strong><br />';
 			echo __( 'The file does not exist, please try again.', 'wordpress-importer' ) . '</p>';
 			$this->footer();
